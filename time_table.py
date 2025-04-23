@@ -54,7 +54,8 @@ class TimetableApp:
             timetable[day].append({
                 'id': _id,
                 'end_time': end_time,
-                'notes': notes
+                'notes': notes,
+                'day_of_week': day
             }) 
         return timetable
 
@@ -86,7 +87,7 @@ class TimetableApp:
         self.notes_entry = ttk.Entry(add_frame)
         self.notes_entry.grid(row=0, column=3, padx=5, pady=5)
 
-        add_button = ttk.Button(add_frame, text="Add Entry", command=self.add_timetable_entry)
+        add_button = ttk.Button(add_frame, text="Add", command=self.add_timetable_entry)
         add_button.grid(row=2, column=0, columnspan=4, padx=5, pady=10)
 
         # Configure row and column weights for resizing
@@ -108,9 +109,14 @@ class TimetableApp:
                 label_text = f"End Time: {entry['end_time']}"
                 if entry.get('notes'):
                     label_text += f"\n{entry['notes']}"
-                entry_label = ttk.Label(frame, text=label_text, borderwidth=1, relief="solid", anchor="w", padding=8)
-                entry_label.pack(fill='x', padx=2, pady=2)
-                entry_label.bind("<Double-1>", lambda event, entry_id=entry['id']: self.edit_timetable_entry(entry_id))
+                entry_frame = ttk.Frame(frame)
+                entry_frame.pack(fill='x', padx=2, pady=2)
+                entry_label = ttk.Label(entry_frame, text=label_text, borderwidth=1, relief="solid", anchor="w", padding=8)
+                entry_label.pack(side='left', fill='x', expand=True)
+                delete_btn = ttk.Button(entry_frame, text="Delete", command = lambda day = entry['day_of_week'], ID = entry['id']: self.delete_timetable_entry(day, frame, ID))
+                # We use a lambda function here and not directly pass the function in the command to avoid instant delete when the app runs.
+                # If we don't use ID, day to contain the params, it passes the same ID to each del btn i.e. ID of the last entry.
+                delete_btn.pack(side='right')
 
     # Function to add events in the timetable through input fields 
     def add_timetable_entry(self):
@@ -118,8 +124,8 @@ class TimetableApp:
         end_time = self.end_time_entry.get()
         notes = self.notes_entry.get()
 
-        if not all([day, end_time]):
-            messagebox.showerror("Error", "Please fill in all required fields (Day, End Time).")
+        if not all([day, end_time, notes]):
+            messagebox.showerror("Error", "Please fill in all required fields (Day, End Time, Note).")
             return
 
         if not (len(end_time) == 5 and end_time[2] == ':' and end_time[:2].isdigit() and end_time[3:].isdigit()):
@@ -141,3 +147,22 @@ class TimetableApp:
         # After adding the data - delete the text in the input fields - clear state
         self.end_time_entry.delete(0, tk.END)
         self.notes_entry.delete(0, tk.END)
+
+    # Function to delete entries - takes 3 args other than self
+    # 1. Day where the delete btn is - to repopulate the widget after deletion
+    # 2. The primary frame of each day
+    # 3. ID of the entry to which the delete button is associated
+    def delete_timetable_entry(self, day, frame, entry_id):
+        try:
+            conn = sqlite3.connect(self.db_name)
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM timetable WHERE id = ?", (entry_id,))
+            conn.commit()
+            conn.close()
+            print(f"Deleted entry with id: {entry_id}")
+            self.timetable_data = self.fetch_timetable()
+            self.populate_day_schedule(day, frame)
+
+        except sqlite3.Error as e:
+            messagebox.showerror("Database Error", f"Error deleting entry: {e}")
+        

@@ -2,9 +2,10 @@
 
 ##### Started with the weekly planning feature.
 
-* Completed adding events to the calendar with end dates, notes, and its GUI.
+- Completed adding events to the calendar with end dates, notes, and its GUI.
 
 ## Agenda for next update
-* Add delete and edit event functionality.
-* Improve GUI - labels, grid, favicon, etc.
 
+- Add edit event functionality - edit notes, end_time.
+- Delete events when the day ends.
+- Improve GUI - labels, grid, favicon, etc.
