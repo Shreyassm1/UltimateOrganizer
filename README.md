@@ -4,6 +4,12 @@
 
 - Completed adding events to the calendar with end dates, notes, and its GUI.
 
+## Log 2 - 23/04/25
+
+##### Started with the weekly planning feature.
+
+- Added delete functionality to each event, no bugs observed yet.
+
 ## Agenda for next update
 
 - Add edit event functionality - edit notes, end_time.
