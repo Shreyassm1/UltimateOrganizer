@@ -3,6 +3,16 @@ from tkinter import ttk, messagebox # Themed Tkinter
 import sqlite3
 from datetime import datetime
 
+week_days = {
+    'Monday' : 0,
+    'Tuesday' : 1,
+    'Wednesday' : 2,
+    'Thursday' : 3,
+    'Friday' : 4,
+    'Saturday' : 5,
+    'Sunday' : 6
+}
+
 class TimetableApp:
     def __init__(self, root):
         self.root = root
@@ -20,11 +30,12 @@ class TimetableApp:
 
         self.db_name = 'timetable.db'
         self.create_table()
-
+        self.delete_when_day_ends()
         self.days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
         self.timetable_data = self.fetch_timetable()
 
         self.create_widgets()
+        
 
     # Function to create a table using python's in-built sqlite3
     def create_table(self):
@@ -109,14 +120,19 @@ class TimetableApp:
                 label_text = f"End Time: {entry['end_time']}"
                 if entry.get('notes'):
                     label_text += f"\n{entry['notes']}"
+
                 entry_frame = ttk.Frame(frame)
                 entry_frame.pack(fill='x', padx=2, pady=2)
+
                 entry_label = ttk.Label(entry_frame, text=label_text, borderwidth=1, relief="solid", anchor="w", padding=8)
                 entry_label.pack(side='left', fill='x', expand=True)
+
                 delete_btn = ttk.Button(entry_frame, text="Delete", command = lambda day = entry['day_of_week'], ID = entry['id']: self.delete_timetable_entry(day, frame, ID))
                 # We use a lambda function here and not directly pass the function in the command to avoid instant delete when the app runs.
                 # If we don't use ID, day to contain the params, it passes the same ID to each del btn i.e. ID of the last entry.
                 delete_btn.pack(side='right')
+            
+                entry_label.bind("<Double-1>", lambda event, item = entry: self.show_dia_box(item))
 
     # Function to add events in the timetable through input fields 
     def add_timetable_entry(self):
@@ -165,4 +181,64 @@ class TimetableApp:
 
         except sqlite3.Error as e:
             messagebox.showerror("Database Error", f"Error deleting entry: {e}")
-        
+
+    # Runs before the widgets are created, making sure the events before today are deleted as soon as app starts 
+    def delete_when_day_ends(self):
+        conn = sqlite3.connect(self.db_name)
+        cursor = conn.cursor()
+        today = datetime.now().weekday()
+        for day in week_days:
+            if week_days[day] < today:
+                cursor.execute("DELETE FROM timetable WHERE day_of_week = ?", (day,))
+        conn.commit()
+        conn.close()
+        print(f"Deleted entries for days before {today}.")
+
+    def show_dia_box(self, item):
+        dia_box = tk.Toplevel(self.root)
+        dia_box.title("Edit Event")
+        dia_box.minsize(350,200)
+        dia_box.maxsize(350,200)
+
+        ttk.Label(dia_box, text = "Edit Note: ").grid(row = 0, column = 0, padx = 10, pady = 10)
+        self.edited_note = ttk.Entry(dia_box)
+        self.edited_note.insert(0, item['notes'])
+        self.edited_note.grid(row = 0, column = 2, padx = 10, pady = 10)
+        ttk.Label(dia_box, text = "Edit Time(HH:MM): ").grid(row = 1, column = 0, padx = 10, pady = 10)
+        self.edited_time = ttk.Entry(dia_box)
+        self.edited_time.insert(0,item['end_time'])
+        self.edited_time.grid(row = 1, column = 2, padx = 5, pady = 5)
+        ttk.Button(dia_box, text = "Save", command = lambda item = item: self.edit_timetable_entry(item, dia_box)).grid(row = 2, column = 1, padx = 5, pady = 5)
+
+        dia_box.columnconfigure(1, weight=1)
+        dia_box.transient(self.root)
+        dia_box.grab_set()
+        self.root.wait_window(dia_box)
+
+    def edit_timetable_entry(self, item, dia_box):
+        conn = sqlite3.connect(self.db_name)
+        cursor = conn.cursor()
+        new_note = self.edited_note.get()
+        end_time = self.edited_time.get()
+        if not (len(end_time) == 5 and end_time[2] == ':' and end_time[:2].isdigit() and end_time[3:].isdigit()):
+            messagebox.showerror("Error", "Invalid time format. Please use HH:MM.")
+            return
+        if new_note != item['notes']:
+            if len(new_note) != 0:
+                cursor.execute(
+                """UPDATE timetable SET notes = ? WHERE id = ?""", (new_note, item['id'])
+                )
+                print("Note updated") 
+        elif end_time != item['end_time']:
+                cursor.execute(
+                """UPDATE timetable SET end_time = ? WHERE id = ?""", (end_time, item['id'])
+                )
+                print("Time updated")  
+        else: print("No update needed")
+             
+        conn.commit()
+        conn.close()
+        self.timetable_data = self.fetch_timetable()
+        self.populate_day_schedule(item['day_of_week'], self.timetable_frames[item['day_of_week']])
+        dia_box.destroy()
+              

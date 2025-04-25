@@ -10,8 +10,19 @@
 
 - Added delete functionality to each event, no bugs observed yet.
 
+## Log 3 - 26/04/25
+
+##### Edit functionality.
+
+- Can edit notes and end-time now.
+- Used event-binding to trigger edit event - dialouge box.
+- DB is only edited if new note/time is different, instead of editing it always regardless of change.
+- Auto-Destroys edit widget and Auto-Updates event widgets after clicking save.
+- Events are deleted when the day ends.
+
 ## Agenda for next update
 
-- Add edit event functionality - edit notes, end_time.
-- Delete events when the day ends.
+- Introduce try/error blocks.
+- Introduce only one global db.connect and one db.close to minimize connection management overhead and allows for easier db transaction management.
+- Remove redundant code.
 - Improve GUI - labels, grid, favicon, etc.
