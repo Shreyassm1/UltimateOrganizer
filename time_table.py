@@ -82,7 +82,7 @@ class TimetableApp:
             self.populate_day_schedule(day, frame)
 
         # Add New Entry Section
-        add_frame = ttk.LabelFrame(self.root, text="Add New Entry")
+        add_frame = ttk.LabelFrame(self.root, text="Add New Event")
         add_frame.grid(row=1, column=0, columnspan=len(self.days), padx=10, pady=10, sticky='ew')
 
         ttk.Label(add_frame, text="Day:").grid(row=0, column=0, padx=5, pady=5)
@@ -194,6 +194,7 @@ class TimetableApp:
         conn.close()
         print(f"Deleted entries for days before {today}.")
 
+    # Function to trigger a edit dialouge box on double clicking the event
     def show_dia_box(self, item):
         dia_box = tk.Toplevel(self.root)
         dia_box.title("Edit Event")
@@ -215,6 +216,7 @@ class TimetableApp:
         dia_box.grab_set()
         self.root.wait_window(dia_box)
 
+    # Function to edit the entries in the end_time and notes of the db
     def edit_timetable_entry(self, item, dia_box):
         conn = sqlite3.connect(self.db_name)
         cursor = conn.cursor()
@@ -229,7 +231,8 @@ class TimetableApp:
                 """UPDATE timetable SET notes = ? WHERE id = ?""", (new_note, item['id'])
                 )
                 print("Note updated") 
-        elif end_time != item['end_time']:
+        else: print("No update needed")
+        if end_time != item['end_time']:
                 cursor.execute(
                 """UPDATE timetable SET end_time = ? WHERE id = ?""", (end_time, item['id'])
                 )
@@ -242,3 +245,7 @@ class TimetableApp:
         self.populate_day_schedule(item['day_of_week'], self.timetable_frames[item['day_of_week']])
         dia_box.destroy()
               
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = TimetableApp(root)
+    root.mainloop()

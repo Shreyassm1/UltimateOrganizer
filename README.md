@@ -20,8 +20,17 @@
 - Auto-Destroys edit widget and Auto-Updates event widgets after clicking save.
 - Events are deleted when the day ends.
 
+## Log 4 - 26/04/25
+
+##### Started with daily planning feature - todo list.
+
+- Created a main entry point for all other minor apps.
+- Click button of whatever app's name and it will open.
+
 ## Agenda for next update
 
+- Add/Delete/Update tasks feature.
+- Delete all when day ends.
 - Introduce try/error blocks.
 - Introduce only one global db.connect and one db.close to minimize connection management overhead and allows for easier db transaction management.
 - Remove redundant code.
